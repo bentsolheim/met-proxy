@@ -16,7 +16,7 @@ func main() {
 func run() error {
 
 	config := app.ReadAppConfig()
-	router := app.CreateGinEngine(config)
+	router := app.CreateGinEngine()
 
 	return router.Run(fmt.Sprintf(":%s", config.ServerPort))
 }

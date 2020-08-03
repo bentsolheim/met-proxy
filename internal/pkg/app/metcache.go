@@ -31,7 +31,9 @@ func (c MetCache) GetFromCacheOrLoad(lat string, lon string) ([]byte, error) {
 
 	mustLoadData := false
 	if isValueInCache {
-		isCachedValueExpired := time.Since(cacheValue.created).Minutes() >= 15
+		valueAge := time.Since(cacheValue.created).Minutes()
+		log.Printf("Cached value age: %f min", valueAge)
+		isCachedValueExpired := valueAge >= 15.0
 		if isCachedValueExpired {
 			mustLoadData = true
 		}

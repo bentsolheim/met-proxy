@@ -1,6 +1,7 @@
 package app
 
 import (
+	"crypto/tls"
 	"encoding/json"
 	"fmt"
 	"github.com/pkg/errors"
@@ -17,12 +18,24 @@ type CacheValue struct {
 	created time.Time
 }
 
-func NewMetCache() MetCache {
-	return MetCache{cache: make(map[string]CacheValue)}
+func NewMetCache(skipTlsVerification bool) MetCache {
+
+	var client *http.Client
+	if skipTlsVerification {
+		log.Printf("TLS Verification has been disabled for requests to api.met.no")
+		tr := &http.Transport{
+			TLSClientConfig: &tls.Config{InsecureSkipVerify: true},
+		}
+		client = &http.Client{Transport: tr}
+	} else {
+		client = &http.Client{}
+	}
+	return MetCache{cache: make(map[string]CacheValue), client: client}
 }
 
 type MetCache struct {
-	cache map[string]CacheValue
+	cache  map[string]CacheValue
+	client *http.Client
 }
 
 func (c MetCache) GetFromCacheOrLoad(lat string, lon string) ([]byte, error) {
@@ -43,7 +56,7 @@ func (c MetCache) GetFromCacheOrLoad(lat string, lon string) ([]byte, error) {
 	if mustLoadData {
 		log.Printf("Getting data for %s", locKey)
 		url := fmt.Sprintf("https://api.met.no/weatherapi/locationforecast/2.0/complete?%s", locKey)
-		resp, err := http.Get(url)
+		resp, err := c.client.Get(url)
 		if err != nil {
 			return nil, errors.Wrap(err, fmt.Sprintf("error while getting %s", url))
 		}

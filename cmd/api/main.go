@@ -17,7 +17,7 @@ func run() error {
 
 	config := app.ReadAppConfig()
 
-	cache := app.NewMetCache()
+	cache := app.NewMetCache(config.SkipTlsVerification)
 	engine := app.CreateGinEngine(cache)
 
 	return engine.Run(fmt.Sprintf(":%s", config.ServerPort))

@@ -16,7 +16,9 @@ func main() {
 func run() error {
 
 	config := app.ReadAppConfig()
-	router := app.CreateGinEngine()
 
-	return router.Run(fmt.Sprintf(":%s", config.ServerPort))
+	cache := app.NewMetCache()
+	engine := app.CreateGinEngine(cache)
+
+	return engine.Run(fmt.Sprintf(":%s", config.ServerPort))
 }

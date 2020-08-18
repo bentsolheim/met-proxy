@@ -5,8 +5,8 @@ import (
 	"encoding/json"
 	"fmt"
 	"github.com/pkg/errors"
+	log "github.com/sirupsen/logrus"
 	"io/ioutil"
-	"log"
 	"math"
 	"net/http"
 	"strings"
@@ -38,9 +38,8 @@ type MetCache struct {
 	client *http.Client
 }
 
-func (c MetCache) GetFromCacheOrLoad(lat string, lon string) ([]byte, error) {
-	locKey := fmt.Sprintf("lat=%s&lon=%s", lat, lon)
-	cacheValue, isValueInCache := c.cache[locKey]
+func (c MetCache) GetFromCacheOrLoad(requestURI string) ([]byte, error) {
+	cacheValue, isValueInCache := c.cache[requestURI]
 
 	mustLoadData := false
 	if isValueInCache {
@@ -54,8 +53,8 @@ func (c MetCache) GetFromCacheOrLoad(lat string, lon string) ([]byte, error) {
 		mustLoadData = true
 	}
 	if mustLoadData {
-		log.Printf("Getting data for %s", locKey)
-		url := fmt.Sprintf("https://api.met.no/weatherapi/locationforecast/2.0/complete?%s", locKey)
+		log.Printf("Getting data for %s", requestURI)
+		url := fmt.Sprintf("https://api.met.no%s", requestURI)
 		resp, err := c.client.Get(url)
 		if err != nil {
 			return nil, errors.Wrap(err, fmt.Sprintf("error while getting %s", url))
@@ -73,7 +72,7 @@ func (c MetCache) GetFromCacheOrLoad(lat string, lon string) ([]byte, error) {
 		log.Printf(fmt.Sprintf("Remotely updated at %v (%v ago)", updatedAt.Format("2006-01-02 15:04:05"), humanizeDuration(time.Since(updatedAt))))
 
 		cacheValue = CacheValue{data: body, created: time.Now()}
-		c.cache[locKey] = cacheValue
+		c.cache[requestURI] = cacheValue
 	}
 	return cacheValue.data, nil
 }

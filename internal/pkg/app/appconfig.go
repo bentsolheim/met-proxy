@@ -2,22 +2,22 @@ package app
 
 import (
 	"github.com/bentsolheim/go-app-utils/utils"
-	"strconv"
+	"github.com/palantir/stacktrace"
 )
 
 type AppConfig struct {
-	ServerPort          string
-	SkipTlsVerification bool
+	ServerPort      string
+	UserAgentHeader string
 }
 
-func ReadAppConfig() AppConfig {
+func ReadAppConfig() (*AppConfig, error) {
 	e := utils.GetEnvOrDefault
-	skipTlsVerification, err := strconv.ParseBool(e("SKIP_TLS_VERIFICATION", "false"))
-	if err != nil {
-		skipTlsVerification = false
+	s := e("USER_AGENT_HEADER", "")
+	if s == "" {
+		return nil, stacktrace.NewError("the USER_AGENT_HEADER env variable was not set - you are required to identify youself against api.met.no")
 	}
-	return AppConfig{
+	return &AppConfig{
 		e("SERVER_PORT", "8082"),
-		skipTlsVerification,
-	}
+		s,
+	}, nil
 }
